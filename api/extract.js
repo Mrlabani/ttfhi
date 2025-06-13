@@ -15,6 +15,7 @@ const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
 async function extractDownloadLink(fileURL) {
   try {
+    // First attempt from HTML
     const res = await axios.get(fileURL, {
       headers: {
         Cookie: cookieHeader,
@@ -26,9 +27,31 @@ async function extractDownloadLink(fileURL) {
     const match = res.data.match(/"dlink":"(http[^"]+)"/);
     if (match) {
       return match[1].replace(/\\u0026/g, "&"); // Unescaping
-    } else {
-      return null;
     }
+
+    // Fallback to API
+    console.log("dlink not found in HTML. Trying fallback.");
+
+    // Often their API endpoint is this:
+    // (this might break or expire; it's reverse-engineered)
+    // Provide your fallback API here:
+
+    const fallback = await axios.post("https://www.terabox.com/rest/share/info", {
+      shorturl: fileURL.split('/')[4],
+    }, {
+      headers: {
+        Cookie: cookieHeader,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // to avoid bot-detect
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (fallback.data && fallback.data.link) {
+      return fallback.data.link;
+    }
+
+    return null;
+
   } catch (error) {
     console.error(error);
     return null;
@@ -40,6 +63,13 @@ module.exports = async (req, res) => {
 
   if (!url) {
     res.status(400).json({error:'URL is missing'})
+    return;
+  }
+
+  if (!url.startsWith("https://d.1024terabox.com/file/") &&
+      !url.startsWith("https://terabox.com/sharelinks/") &&
+      !url.startsWith("https://1024terabox.com/sharelinks/")) {
+    res.status(400).json({error:'Invalid or unsupported URL'})
     return;
   }
 
