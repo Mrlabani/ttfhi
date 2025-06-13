@@ -29,27 +29,6 @@ async function extractDownloadLink(fileURL) {
       return match[1].replace(/\\u0026/g, "&"); // Unescaping
     }
 
-    // Fallback to API
-    console.log("dlink not found in HTML. Trying fallback.");
-
-    // Often their API endpoint is this:
-    // (this might break or expire; it's reverse-engineered)
-    // Provide your fallback API here:
-
-    const fallback = await axios.post("https://www.terabox.com/rest/share/info", {
-      shorturl: fileURL.split('/')[4],
-    }, {
-      headers: {
-        Cookie: cookieHeader,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // to avoid bot-detect
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (fallback.data && fallback.data.link) {
-      return fallback.data.link;
-    }
-
     return null;
 
   } catch (error) {
