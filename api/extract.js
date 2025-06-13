@@ -1,7 +1,3 @@
-const express = require("express");
-
-const router = express.Router();
-
 const axios = require("axios");
 
 const cookies = [
@@ -39,11 +35,12 @@ async function extractDownloadLink(fileURL) {
   }
 }
 
-router.get("/", async (req, res) => {
+module.exports = async (req, res) => {
   const { url } = req.query;
 
   if (!url) {
-    return res.status(400).json({error:'URL is missing'})
+    res.status(400).json({error:'URL is missing'})
+    return;
   }
 
   const directLink = await extractDownloadLink(url.trim());
@@ -53,7 +50,5 @@ router.get("/", async (req, res) => {
   } else {
     res.status(500).json({error:'Unable to extract direct link'})
   }
-});
+};
 
-// Vercel handlers
-module.exports = router;
